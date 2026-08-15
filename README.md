@@ -1,45 +1,112 @@
 # Smart Email Notifier
 
-**AI 重要邮件智能提醒｜自动识别重要邮件、截止时间与下一步行动。**
+**ChatGPT-first AI 重要邮件智能提醒｜告诉 ChatGPT 你不想错过什么，剩下能安全自动完成的交给它。**
 
 [中文文档](./README.zh-CN.md) · English
 
 ![Privacy-safe QQ Mail → Gmail → ChatGPT demo](./assets/qqmail-gmail-chatgpt-demo.svg)
 
-A reusable AI-assisted workflow for turning important emails into actionable reminders.
+Smart Email Notifier is a **ChatGPT-first Skill** for turning important emails into actionable reminders. It is designed to use ChatGPT's existing connected apps, Tasks/automations, and browser/computer capabilities when those capabilities are available in the current environment.
 
-Instead of forwarding an entire inbox and generating more noise, this project uses a two-stage design:
+## The intended experience
 
-**mailbox rule for broad routing → AI for semantic judgment and reminders**
+```text
+Install the Skill
+      ↓
+Tell ChatGPT what you cannot afford to miss
+      ↓
+ChatGPT discovers available capabilities
+      ↓
+Automates everything it can safely perform
+      ↓
+You only take over for login / 2FA / verification / consent
+      ↓
+Ongoing email checking becomes automatic
+```
 
-## What problem does it solve?
+Example:
 
-Important messages are often mixed with newsletters, promotions, and routine notifications. A keyword filter alone is too brittle: an urgent email may say “next-round arrangement” without using the word “interview”, while a recruiting advertisement may contain “interview” and “assessment” without requiring any action.
+```text
+帮我配置秋招邮件提醒。
+```
 
-Smart Email Notifier separates the problem:
+The Skill should not respond with a long manual by default. It should inspect the available ChatGPT capabilities, perform supported actions directly, and guide only the missing provider-specific steps.
 
-- **Source mailbox:** broadly collects potentially important messages.
-- **Destination mailbox:** provides an inbox that your AI assistant can access.
-- **AI layer:** decides whether a message actually requires attention and extracts deadlines/actions.
-- **Automation layer:** checks on an appropriate cadence and notifies only when necessary.
+See [`CHATGPT.md`](./CHATGPT.md) for the runtime contract.
 
-## Architecture
+## Why two filtering layers?
+
+Important messages are mixed with newsletters, promotions, and routine notifications. A keyword filter alone is brittle: an urgent email may say `下一轮安排` without saying `面试`, while a recruiting advertisement may contain every recruiting keyword without requiring action.
+
+The architecture therefore separates recall from judgment:
 
 ```text
 Source mailbox
     ↓
-Folder / receiving rule
+Broad mailbox rule / selective forwarding
     ↓
-Selective forwarding
+ChatGPT-accessible mailbox
     ↓
-AI-accessible mailbox
-    ↓
-Semantic classification
+AI semantic classification
     ↓
 Action / deadline extraction
     ↓
-Scheduled or conditional reminder
+Task / conditional notification
 ```
+
+> **Mailbox rules maximize recall. AI decides whether the message deserves your attention.**
+
+## Automation levels
+
+The exact experience depends on the tools available in the user's current ChatGPT environment.
+
+| Level | What happens |
+| --- | --- |
+| Guide | ChatGPT generates the exact configuration and guides unsupported provider steps |
+| Assisted setup | ChatGPT directly uses connected mail + Tasks; the user handles source-mail login/verification |
+| Connector-driven | Source and destination providers are both controllable, so more setup can be executed directly |
+
+Authentication, CAPTCHA, SMS/2FA, passwords, recovery codes, and sensitive consent remain human checkpoints.
+
+Read [`docs/automation-model.md`](./docs/automation-model.md) for the detailed capability model.
+
+## ChatGPT-first behavior
+
+When the runtime provides the necessary capabilities, the Skill should prefer:
+
+1. connected mailbox/app tools over manual instructions;
+2. direct Task/automation creation over asking the user to copy a prompt;
+3. browser/computer interaction for ordinary provider configuration when supported;
+4. human takeover only at authentication, verification, CAPTCHA, or sensitive consent boundaries;
+5. a guided fallback only for capabilities the runtime genuinely lacks.
+
+A Skill does **not** itself grant browser or mailbox permissions. Availability can differ by ChatGPT client, plan, workspace, region, and provider behavior.
+
+## Real example: QQ Mail → Gmail → ChatGPT
+
+The project was initially inspired by campus recruiting: important coding tests and interviews arrived in QQ Mail among large amounts of recruiting mail.
+
+In a capable ChatGPT environment, the desired flow is:
+
+```text
+User: “帮我配置秋招邮件提醒”
+
+AUTO  choose job-search preset
+AUTO  inspect Gmail / Tasks / browser capabilities
+AUTO  navigate QQ Mail configuration when browser control is available
+USER  login / phone verification when required
+AUTO  find the forwarding verification message in Gmail
+USER  approve sensitive provider consent when required
+AUTO  verify Gmail retrieval
+AUTO  create the recurring semantic check
+AUTO  verify the end-to-end path
+```
+
+If QQ Mail cannot be controlled, only that portion degrades to guided setup. Gmail retrieval and Task creation should still be automated when available.
+
+Privacy-safe walkthrough: [`docs/qqmail-gmail-chatgpt.md`](./docs/qqmail-gmail-chatgpt.md).
+
+ChatGPT-first recruiting preset: [`presets/job-search-chatgpt.md`](./presets/job-search-chatgpt.md).
 
 ## Supported scenarios
 
@@ -52,72 +119,28 @@ Scheduled or conditional reminder
 | Orders | delivery exception, pickup deadline, refund update |
 | Security | login warning, verification request, account action |
 
-## Quick start
-
-1. Decide which class of emails you cannot afford to miss.
-2. Create a dedicated folder/label in the source mailbox (recommended, not required).
-3. Add broad receiving rules and selectively forward matches to a supported destination mailbox.
-4. Complete any manual forwarding verification required by the providers.
-5. Connect the destination mailbox to your AI assistant.
-6. Create a semantic policy that extracts actions and deadlines while suppressing noise.
-7. Schedule checks at a cadence appropriate for the scenario.
-8. Test the full path end to end.
-
-See [`SKILL.md`](./SKILL.md) for reusable agent instructions and [`docs/qqmail-gmail-chatgpt.md`](./docs/qqmail-gmail-chatgpt.md) for the privacy-safe QQ Mail → Gmail → ChatGPT walkthrough.
-
-## Real example: QQ Mail → Gmail → ChatGPT for recruiting notifications
-
-This repository was initially inspired by a real campus-recruiting problem: coding tests and interview invitations arrive in QQ Mail among many recruiting messages, making deadlines easy to miss.
-
-Recommended setup:
+## Skill structure
 
 ```text
-Create a dedicated “求职” folder
-→ create broad receiving rules
-→ move matches to the folder + selectively forward to Gmail
-→ complete QQ Mail verification
-→ approve forwarding in Gmail
-→ connect Gmail to ChatGPT
-→ create semantic reminder checks
+SKILL.md                       Agent orchestration rules
+CHATGPT.md                     ChatGPT runtime contract
+presets/                       Scenario-specific policies
+docs/automation-model.md       Capability / fallback model
+docs/qqmail-gmail-chatgpt.md   Provider-specific example
+assets/                        Privacy-safe public visuals
 ```
 
-The keyword list is a **coarse filter**, not the final intelligence layer. AI performs the final semantic decision because important mail may use wording such as `下一轮安排` without saying `面试`, while a marketing email may contain many recruiting keywords without requiring action.
+## Privacy
 
-Job-search preset: [`presets/job-search.md`](./presets/job-search.md).
+Do not publish or feed public examples with real email addresses, phone numbers, verification codes, candidate/account IDs, private assessment/interview links, meeting links, tokens, cookies, app passwords, QR codes, authorization codes, or URLs containing personal identifiers.
 
-## Reusable automation prompt
+Use synthetic values such as `example@qq.com` and `yourname@example.com`. Fictional recruiting cards should be explicitly marked `演示数据 · 非真实招聘通知`.
 
-```text
-Check my connected mailbox for new messages since the previous check.
-Identify messages related to [SCENARIO] that create an action, deadline,
-status change, risk, or decision.
+## Current scope
 
-Extract the sender/organization, category, event or action, event time,
-deadline, relevant link, and the next action I need to take.
+The repository currently provides the ChatGPT-first orchestration Skill, runtime contract, presets, and provider guidance. It does **not** ship a custom QQ Mail connector or bypass provider authentication/security controls.
 
-Suppress advertisements, newsletters, duplicate forwards, generic promotions,
-and informational messages that require no action. Notify me only when something
-new requires attention. If a deadline is explicit, highlight the remaining time
-and recommended next step. Never invent missing dates or deadlines.
-```
-
-## Privacy before publishing
-
-Do not publish real screenshots until you have removed or replaced full email addresses, phone numbers, verification codes, candidate/account IDs, private assessment/interview links, meeting links, tokens, cookies, app passwords, QR codes, authorization codes, and URLs containing personal identifiers.
-
-Use synthetic values such as `example@qq.com`, `yourname@gmail.com`, and `https://example.com/...` in documentation. Prefer a sanitized demonstration over placing a weak translucent blur on secrets.
-
-## Design principles
-
-1. **Important ≠ contains a keyword.** Final classification should be semantic.
-2. **Do not forward everything by default.** Minimize unnecessary exposure of private mail.
-3. **Notify on actionability.** A good notifier reduces interruptions rather than creating them.
-4. **Human verification stays human.** Authentication and sensitive confirmation steps should not be delegated.
-5. **Provider-specific setup is an adapter.** The core Skill remains reusable across mail providers and scenarios.
-
-## Status
-
-Early version based on a working QQ Mail → Gmail → ChatGPT recruiting-notification workflow. More provider adapters and scenario presets can be added over time.
+A future ChatGPT App / MCP layer can add stable provider-specific tools where native ChatGPT capabilities are insufficient. Current OpenAI frontier models support Skills, computer use, and MCP at the model/tooling layer, which makes this a viable evolution path; actual ChatGPT surface availability still needs to be checked at runtime.
 
 ## License
 
