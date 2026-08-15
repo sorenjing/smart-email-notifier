@@ -1,130 +1,202 @@
 ---
 name: smart-email-notifier
-description: Build an AI-assisted important-email notification workflow. Use when a user wants to route important messages from an unsupported or secondary mailbox into an AI-accessible mailbox, classify actionable emails semantically, extract deadlines and required actions, and create scheduled reminders. Supports job-search, school, billing, meetings, orders, account/security, and custom scenarios. Never expose mailbox addresses, phone numbers, verification codes, private application links, candidate IDs, tokens, or other secrets in public examples.
+description: Use when a user wants important email to be detected and surfaced automatically, especially when mail arrives in an unsupported or secondary mailbox, important messages are buried in noise, deadlines are easy to miss, or a reusable email-to-AI notification workflow is needed.
 ---
 
 # Smart Email Notifier
 
-Turn an inbox from a passive message store into an actionable notification workflow.
+## Overview
 
-## Core architecture
+Act as a **capability-aware setup wizard**, not a static tutorial.
 
-`Source mailbox → coarse mail rule → AI-accessible mailbox → semantic classification → scheduled/conditional notification`
+Core principle:
 
-Keep the two filters separate:
+> Automate every step the current runtime can safely perform; guide the user only through steps that require unavailable provider access, browser interaction, authentication, verification, or explicit consent.
 
-1. **Mailbox rules optimize recall.** They should broadly route potentially important mail.
-2. **AI classification optimizes precision.** It decides whether a message actually requires attention or action.
+The target experience is **one-time setup → automatic ongoing classification and notification**.
 
-Do not rely on keywords alone for final notification decisions.
+## When to use
 
-## Workflow
+Use for workflows such as job-search notices, school deadlines, bills and renewals, meetings, orders, account/security notices, or any custom class of email the user cannot afford to miss.
 
-### 1. Define the scenario
+Do not use merely to summarize one already-open email.
 
-Ask what the user cannot afford to miss. Examples:
+## Execution contract
 
-- job search: assessments, interviews, HR actions, offers, signing deadlines
-- school: course notices, exams, deadlines, administrative actions
-- billing: invoices, renewals, payment failures
-- meetings: invitations, reschedules, required preparation
-- orders: delivery exceptions, pickup deadlines, refunds
-- account/security: login warnings, verification requests, policy changes
+When invoked, do not dump the whole README first. Progress through setup interactively.
 
-Create a broad keyword set only as a first-stage routing rule.
+### 1. Discover capabilities before instructing
 
-### 2. Create a dedicated folder/label in the source mailbox
+Determine which actions the runtime can actually perform now:
 
-Prefer a scenario-specific folder such as `求职`, `学校`, `账单`, or `Important-AI` rather than forwarding the entire inbox.
+- read/search the destination mailbox;
+- create scheduled or conditional tasks;
+- access the source mailbox;
+- open/navigate provider setup pages;
+- send a harmless test email;
+- access calendar/to-do integrations if the requested preset needs them.
 
-### 3. Create a receiving rule
+Prefer a real capability check over asking the user whether something is connected.
 
-Configure the source mailbox rule to match broad subject/body/sender signals, then:
+Classify each setup step as:
 
-- move or copy matching messages to the dedicated folder;
-- forward matching messages to the AI-accessible destination mailbox when supported;
-- keep the original message unless the user explicitly wants otherwise.
+- **AUTO** — perform it directly;
+- **USER ACTION** — user must authenticate, verify, consent, or click in an unsupported provider;
+- **OPTIONAL** — useful but not required.
 
-Warn that some providers require phone/SMS verification when saving forwarding rules.
+Never claim an action was automated unless the runtime actually performed it.
 
-### 4. Verify forwarding
+### 2. Resolve the scenario
 
-Forwarding may require a second confirmation in the destination mailbox. Tell the user to open the provider-generated confirmation email and approve forwarding manually. Never ask the user to paste SMS codes, passwords, app passwords, or mailbox authorization codes into chat.
+Infer the preset from context when clear. Otherwise ask only for the minimum missing information.
 
-### 5. Connect the destination mailbox to the AI product
+Examples:
 
-Use the product's supported mailbox connector. Confirm connectivity with a harmless search before claiming the workflow works.
+- `job-search`
+- `school`
+- `billing`
+- `meetings`
+- `orders`
+- `security`
+- `custom`
 
-### 6. Build the semantic notification policy
+Mailbox keyword rules are only a coarse recall layer. AI semantic classification remains the final decision layer.
 
-For every new candidate email, extract when available:
+### 3. Configure the source mailbox
 
-- sender/company/organization
-- scenario/category
-- event or required action
-- event time
-- deadline
-- relevant link
-- urgency
-- next action
+If the source mailbox is directly controllable, create the folder/label and broad routing rule after obtaining any required user approval.
 
-Notify only when the email creates a meaningful action, deadline, status change, risk, or decision. Suppress ads, newsletters, duplicated forwards, generic recruiting promotions, and FYI messages with no action.
+If it is not controllable:
 
-If a deadline exists, highlight remaining time and the next action. Do not infer a deadline that is not present.
+1. provide the shortest provider-specific route to the relevant settings page when a reliable URL is known;
+2. tell the user exactly what to create, using copyable values;
+3. stop at authentication/SMS/2FA/consent boundaries and ask the user to complete them;
+4. resume from the next step when the user confirms completion.
 
-### 7. Schedule checks
+Prefer selective forwarding of a dedicated folder/rule over forwarding an entire private inbox.
 
-Choose cadence based on consequence and latency. For time-sensitive recruiting or school workflows, several checks during waking hours may be appropriate. For bills or newsletters, daily or weekly checks may be enough. Use the user's timezone.
+For a job-search preset, a starter recall set can include:
 
-### 8. Test end to end
+`面试 / 笔试 / 测评 / 在线测评 / 人才测评 / 初试 / 复试 / 校招 / 秋招 / 录用 / offer / 签约 / 背调 / 候选人 / 下一轮`
 
-Send or wait for a harmless test message that matches the rule. Verify:
+Tune it from observed false negatives/positives. Do not treat it as the notification policy.
 
-`source inbox → folder/rule → destination inbox → AI retrieval → classification → reminder`
+### 4. Handle verification as a human checkpoint
 
-Do not treat setup as complete until the forwarding path is verified.
+Never request or handle mailbox passwords, SMS codes, app passwords, recovery codes, or authorization tokens.
 
-## Reusable automation prompt
+If the provider requires mobile verification or forwarding consent, explain only the immediate action and wait for completion.
 
-Use this as a base and customize the scenario:
+If a confirmation email arrives in a connected destination mailbox, locate it automatically when possible. The user must perform any consent click that the runtime cannot safely execute.
 
-> Check my connected mailbox for new messages since the previous check. Identify messages related to [SCENARIO] that create an action, deadline, status change, risk, or decision. Extract the sender/organization, category, event or action, event time, deadline, relevant link, and the next action I need to take. Suppress advertisements, newsletters, duplicate forwards, generic promotions, and informational messages that require no action. Notify me only when something new requires attention. If a deadline is explicit, highlight the remaining time and recommended next step. Never invent missing dates or deadlines.
+### 5. Verify destination-mailbox connectivity
 
-## Example: QQ Mail → Gmail → ChatGPT for campus recruiting
+If the destination mailbox connector is available, perform a harmless search/read test. Do not merely tell the user to test it.
 
-A real deployment can use QQ Mail as the source mailbox and Gmail as the AI-accessible mailbox.
+If it is unavailable, direct the user to connect it, then verify after connection.
 
-1. In QQ Mail, create a folder such as `求职`.
-2. Create receiving rules with broad signals such as `面试`, `笔试`, `测评`, `在线测评`, `校招`, `秋招`, `录用`, `offer`, `签约`, `背调` and similar phrases.
-3. Configure matching mail to enter the `求职` folder and forward to Gmail.
-4. Save the rule. QQ Mail may require manual mobile-phone verification.
-5. Open Gmail and find the forwarding confirmation email sent by QQ Mail. Open it and manually approve/confirm automatic forwarding.
-6. Connect Gmail to ChatGPT.
-7. Create a recurring check for new recruiting mail. Let the AI distinguish actionable assessments/interviews/deadlines from ordinary recruiting promotions.
-8. Test the complete chain before relying on it.
+### 6. Create the semantic policy
 
-The important design choice is that the QQ Mail keyword rule is deliberately broad. The AI performs the final semantic decision, because important mail may use wording such as `下一轮安排` without saying `面试`, while a marketing email may contain many recruiting keywords without requiring action.
+For each candidate email, extract when available:
 
-## Privacy and publication checklist
+- sender/company/organization;
+- scenario/category;
+- event or required action;
+- event time;
+- explicit deadline;
+- relevant link;
+- urgency;
+- next action.
 
-Before publishing screenshots, examples, videos, or documentation, redact or replace:
+Notify only when the message creates a meaningful action, deadline, status change, risk, or decision.
 
-- full email addresses
-- phone numbers
-- verification codes
-- names when unnecessary
-- candidate/student/account IDs
-- private assessment/interview/application links
-- meeting links that grant access
-- tokens, authorization codes, cookies, app passwords, QR codes
-- message IDs or URLs containing secrets
+Suppress advertisements, newsletters, duplicate forwards, generic promotions, and FYI messages with no action.
 
-Prefer synthetic examples such as `yourname@example.com`. If a screenshot has already captured a secret, create a sanitized screenshot rather than relying only on a translucent blur.
+Never invent missing dates, deadlines, links, status, or urgency.
+
+### 7. Create the automation when the runtime supports it
+
+Do not make the user manually copy a prompt if a task/automation tool is available.
+
+Choose cadence based on consequence and latency, using the user's timezone. Time-sensitive recruiting or school workflows may warrant multiple checks during waking hours; low-urgency billing/newsletter workflows may be daily or weekly.
+
+Base automation instruction:
+
+> Check my connected mailbox for new messages since the previous check. Identify messages related to [SCENARIO] that create an action, deadline, status change, risk, or decision. Extract the sender/organization, category, event or action, event time, explicit deadline, relevant link, urgency, and next action. Suppress advertisements, newsletters, duplicate forwards, generic promotions, and informational messages that require no action. Notify me only when something new requires attention. If a deadline is explicit, highlight remaining time and the recommended next step. Never invent missing dates, deadlines, links, or status.
+
+### 8. Verify end to end
+
+Do not declare setup complete merely because configuration exists.
+
+Verify as much of this chain as tools allow:
+
+`source inbox → rule/folder → destination inbox → AI retrieval → semantic classification → scheduled notification`
+
+If a harmless test can be generated, use one. Otherwise verify against an existing non-sensitive message.
+
+Report separately:
+
+- verified automatically;
+- configured but awaiting real mail;
+- still requires user action.
+
+## Provider adapter: QQ Mail → Gmail → ChatGPT
+
+Use this adapter when QQ Mail is the source and Gmail is the AI-accessible destination.
+
+1. **USER ACTION if QQ Mail is not controllable:** open QQ Mail settings and create a dedicated folder such as `求职` or `Important-AI`.
+2. Create a receiving rule using broad preset signals.
+3. Set actions to move matching mail into the dedicated folder and forward it to Gmail while retaining the original message.
+4. **USER ACTION:** complete QQ Mail mobile verification if prompted.
+5. **AUTO when Gmail is connected:** search Gmail for the QQ Mail forwarding verification message.
+6. **USER ACTION:** approve forwarding if the consent link cannot be safely clicked by the runtime.
+7. **AUTO:** verify that Gmail is readable by the AI runtime.
+8. **AUTO when task tooling exists:** create the recurring semantic check instead of asking the user to copy the prompt.
+9. Verify the complete chain.
+
+The architecture is deliberately two-stage:
+
+> mailbox rule maximizes recall → AI classification improves precision.
+
+An important email may say `下一轮安排` without saying `面试`; a recruiting newsletter may contain every keyword while requiring no action.
+
+## Setup status format
+
+Keep progress concise. A useful status summary is:
+
+```text
+Smart Email Notifier
+✓ Destination mailbox connected
+✓ Semantic policy ready
+✓ Recurring check created
+→ Source-mail forwarding: waiting for your verification
+○ End-to-end test: pending
+```
+
+Only show steps relevant to the user's current state.
+
+## Privacy and safety
+
+Before publishing screenshots, examples, logs, or documentation, replace rather than merely blur:
+
+- full email addresses;
+- phone numbers;
+- verification codes;
+- personal names when unnecessary;
+- candidate/student/account IDs;
+- private assessment/interview/application links;
+- meeting links that grant access;
+- tokens, authorization codes, cookies, app passwords, QR codes;
+- message IDs and URLs containing identifiers or secrets.
+
+Use synthetic values such as `example@qq.com` and `yourname@example.com`. Mark fictional recruiting cards as `演示数据 · 非真实招聘通知`.
 
 ## Boundaries
 
-- Do not claim universal mailbox support. Provider capabilities differ.
-- Do not ask for passwords or verification codes.
-- Do not automatically forward an entire private inbox unless the user explicitly accepts that privacy tradeoff.
-- Do not convert every email into a notification; the value is reducing noise.
-- Keep the workflow provider-agnostic. Provider-specific instructions belong in examples or docs.
+- A Skill does not itself grant mailbox or browser permissions.
+- Never fabricate a provider settings URL. Use a verified route when available; otherwise give navigation labels.
+- Never bypass authentication, 2FA, forwarding consent, or provider security controls.
+- Never ask for secrets that should remain between the user and provider.
+- Do not forward the entire private inbox by default.
+- Do not create noisy notifications for every matching email.
+- Provider-specific behavior belongs in adapters; semantic policy belongs in presets.
