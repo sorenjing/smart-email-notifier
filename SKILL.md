@@ -1,163 +1,155 @@
 ---
 name: smart-email-notifier
-description: Use when a user wants important email to be detected and surfaced automatically, especially when mail arrives in an unsupported or secondary mailbox, important messages are buried in noise, deadlines are easy to miss, or a reusable email-to-AI notification workflow is needed.
+description: Help users set up reliable important-email triage and reminders. Use when a user wants to avoid missing actionable email such as job-search, school, work, billing, order, or security notices, especially when important messages are buried in noise or arrive in a mailbox that needs routing to an AI-accessible inbox.
 ---
 
 # Smart Email Notifier
 
-## Overview
+## Goal
 
-Act as a **capability-aware setup wizard**, not a static tutorial.
+Turn a natural-language intent such as:
 
-> Automate every step the current runtime can safely perform; guide the user only through steps that require unavailable provider access, browser interaction, authentication, verification, or explicit consent.
+> “帮我配置秋招重要邮件提醒。”
 
-Target experience: **tell ChatGPT what matters → generate the right mailbox rule and semantic policy → configure what can be configured → ask for human action only at security boundaries → ongoing automatic notification.**
+into a practical workflow that maximizes recall at the mailbox layer and uses semantic judgment to reduce unnecessary notifications.
 
-## When to use
-
-Use for job-search notices, school deadlines, work/meeting notices, bills and renewals, orders, account/security notices, or any custom class of email the user cannot afford to miss.
-
-Do not use merely to summarize one already-open email.
-
-## Execution contract
-
-Do not dump the README first. Progress through setup interactively.
-
-### 1. Discover capabilities
-
-Check which actions the runtime can actually perform now:
-
-- read/search the destination mailbox;
-- create scheduled or conditional tasks;
-- access the source mailbox;
-- open/navigate provider setup pages;
-- send a harmless test email;
-- access calendar/to-do integrations if needed.
-
-Classify each relevant step as **AUTO**, **USER ACTION**, or **OPTIONAL**. Prefer a real capability check over asking whether something is connected. Never claim an action was automated unless it was actually performed.
-
-### 2. Resolve the scenario
-
-Infer the scenario from context when clear; otherwise ask only for the minimum missing information. Common scenarios: `job-search`, `school`, `work/meetings`, `billing`, `orders`, `security`, `custom`.
-
-The scenario determines both:
-
-1. the **mailbox recall rule** used to catch likely candidates;
-2. the **AI semantic policy** used to decide whether the user should actually be interrupted.
-
-### 3. Generate the mailbox rule, not just keywords
-
-Before asking the user to configure a provider, translate the scenario into the provider's actual rule model. Recommend, when supported:
-
-- folder/label name;
-- field(s) to match, e.g. subject, body, sender;
-- match operator;
-- include terms;
-- exclude terms if useful;
-- actions such as move/label, forward, retain original;
-- forwarding destination when already known and appropriate.
-
-Choose the operator intentionally. For broad recall, prefer an **OR / any-match** operator such as `包含任一` rather than requiring every keyword to appear. Use `包含全部` only when all terms are genuinely required; use `不包含任一` / `不包含全部` only when exclusions improve precision without creating unacceptable false negatives.
-
-For QQ Mail job-search recall, a typical starting recommendation is:
+Target experience:
 
 ```text
-条件关系：任一条件
-主题：包含任一 → 面试 / 笔试 / 测评 / offer / Offer / 录用 / 初试 / 复试 / 校招 / 补录 / 签约 / 背调
-正文：包含任一 → 面试 / 笔试 / 测评 / offer / Offer / 录用 / 参加 / 初试 / 复试 / 校招 / 补录 / 签约 / 背调 / 候选人 / 下一轮
-动作：移动到「求职」 + 自动转发到 AI 可访问邮箱 + 保留原邮件
+tell ChatGPT what matters
+→ understand the scenario
+→ design mailbox recall + AI triage
+→ use available capabilities
+→ ask for user action only where required
+→ verify the workflow
+→ notify only when attention is needed
 ```
 
-This is a recall layer, not the notification policy. Tune suggestions to the user's scenario and provider instead of blindly reusing this example.
+## Core principle
 
-### 4. Configure the source mailbox
+Use two stages instead of treating keyword matching as the final decision:
 
-If the source mailbox is controllable, create the folder/label and routing rule after any required approval.
+> **mailbox rule maximizes recall → AI semantic triage improves precision**
 
-If it is not controllable:
+Mailbox rules should catch plausible candidates. Semantic triage should decide whether a message creates a meaningful action, deadline, status change, risk, or decision.
 
-1. open the verified provider settings route when the runtime supports it;
-2. tell the user exactly which UI values to select, using the generated rule;
-3. stop only at authentication, SMS/2FA, CAPTCHA, consent, or unsupported UI actions;
-4. resume when the user confirms completion.
+## Workflow
+
+### 1. Understand the scenario
+
+Infer the user's goal from context when it is clear. Ask only for information that is necessary to design the workflow.
+
+Typical scenarios include job search, school, work/meetings, billing, orders, security notices, and custom high-priority email.
+
+### 2. Check available capabilities
+
+Determine which parts can actually be performed in the current environment, such as:
+
+- reading/searching a connected mailbox;
+- creating scheduled or conditional checks;
+- accessing the source mailbox;
+- navigating provider settings;
+- performing a harmless end-to-end test.
+
+Tool availability varies by client, plan, region, provider and authorization. Never represent an unavailable or unperformed action as completed.
+
+### 3. Design the mailbox recall rule
+
+Adapt the rule to the provider's actual filtering model. When supported, consider:
+
+- folder or label;
+- subject, body and sender fields;
+- any-match / all-match / exclusion logic;
+- recall keywords and useful exclusions;
+- move, label, retain or selective-forwarding actions.
+
+Prefer broad recall when false negatives are costly. An OR / any-match rule is often more appropriate than requiring every signal to appear. Use stricter matching only when the scenario warrants it.
+
+Provider- and scenario-specific values belong in presets or examples rather than being hard-coded into the core workflow.
+
+### 4. Configure or guide the mailbox setup
+
+Use available provider or browser capabilities when they can safely perform the setup. Otherwise provide the shortest exact manual path and the values the user should enter.
 
 Prefer selective forwarding over forwarding an entire private inbox.
 
-### 5. Handle verification as a human checkpoint
+Authentication, CAPTCHA, SMS/2FA, passwords, security codes and sensitive consent remain user-controlled. Resume the workflow after the user completes the required checkpoint.
 
-Never request or handle mailbox passwords, SMS codes, app passwords, recovery codes, or authorization tokens. If mobile verification or forwarding consent is required, explain only the immediate action and wait. If the confirmation email arrives in a connected destination mailbox, locate it automatically when possible.
+### 5. Create the semantic triage policy
 
-### 6. Verify destination-mailbox connectivity
+Generate a policy appropriate to the scenario. For each candidate message, identify relevant fields such as:
 
-If the destination mailbox connector is available, perform a harmless search/read test. If unavailable, direct the user to connect it and verify afterward.
+- sender or organization;
+- category;
+- required action;
+- event time;
+- explicit deadline;
+- relevant link;
+- urgency;
+- recommended next action.
 
-### 7. Generate the semantic policy
+Notify only when a new message creates a meaningful action, deadline, status change, risk, or decision. Suppress advertisements, newsletters, duplicate forwards, generic promotions and informational messages that require no action. Never invent missing dates, links, deadlines or status.
 
-Generate a scenario-specific instruction rather than forcing the user to write one. For each candidate email, extract relevant fields such as sender/organization, category, required action, event time, explicit deadline, relevant link, urgency, and next action.
+A useful base policy is:
 
-Notify only when the message creates a meaningful action, deadline, status change, risk, or decision. Suppress advertisements, newsletters, duplicate forwards, generic promotions, and FYI messages with no action. Never invent missing facts.
+> Check new messages since the previous check. Identify messages related to the user's scenario that create an action, deadline, status change, risk, or decision. Extract the organization/sender, category, required action, event time, explicit deadline, relevant link, urgency, and next action. Suppress advertisements, newsletters, duplicate forwards, generic promotions, and informational messages that require no action. Notify only when something new requires attention. Highlight explicit deadlines and the recommended next step. Never invent missing information.
 
-Base template:
+### 6. Set up ongoing checks when available
 
-> Check my connected mailbox for new messages since the previous check. Identify messages related to [SCENARIO] that create an action, deadline, status change, risk, or decision. Extract the sender/organization, category, event or action, event time, explicit deadline, relevant link, urgency, and next action. Suppress advertisements, newsletters, duplicate forwards, generic promotions, and informational messages that require no action. Notify me only when something new requires attention. If a deadline is explicit, highlight remaining time and the recommended next step. Never invent missing dates, deadlines, links, or status.
+When task or automation capabilities are available, create the recurring or conditional check directly. Choose the cadence according to the consequence and time sensitivity of the scenario rather than applying one fixed schedule to every user.
 
-### 8. Create the automation
+If automation is unavailable, provide the generated policy so the user can use it in an environment that supports recurring checks.
 
-If task/automation tooling is available, create the recurring or conditional check directly instead of asking the user to copy a prompt. Choose cadence from consequence, latency, and the user's timezone rather than hard-coding one schedule for every scenario.
+### 7. Verify the workflow
 
-### 9. Verify end to end
+Verify as much of the chain as the available tools allow:
 
-Verify as much as tools allow:
+```text
+source inbox
+→ recall rule / routing
+→ AI-accessible inbox
+→ semantic triage
+→ reminder
+```
 
-`source inbox → rule/folder → destination inbox → AI retrieval → semantic classification → scheduled notification`
+A harmless test message can be used when appropriate. Clearly distinguish between verified steps, configured-but-unverified steps, and remaining user actions.
 
-Use a harmless test when possible. Report separately what is verified automatically, what is configured but awaiting real mail, and what still requires user action.
+## Provider examples
 
-## Provider adapter: QQ Mail → Gmail → ChatGPT
+Provider-specific behavior should remain outside the core Skill whenever possible.
 
-Use when QQ Mail is the source and Gmail is the AI-accessible destination.
+For the QQ Mail → Gmail → ChatGPT example, see:
 
-1. Generate the scenario-specific QQ Mail folder and receive-rule values.
-2. If QQ Mail is not controllable, guide/open the settings and let the user enter only the required values.
-3. Configure move-to-folder + selective forwarding + retain-original where appropriate.
-4. **USER ACTION:** complete QQ Mail mobile verification if prompted.
-5. **AUTO when Gmail is connected:** locate the QQ Mail forwarding verification message.
-6. **USER ACTION:** approve forwarding if the consent click cannot be safely executed.
-7. **AUTO:** verify Gmail retrieval.
-8. **AUTO when Tasks exist:** create the semantic check.
-9. Verify the chain.
+- `docs/qqmail-gmail-chatgpt.md`
+- the relevant scenario preset under `presets/`
 
-The architecture is deliberately two-stage:
+The example demonstrates selective forwarding, provider verification and semantic triage; it is not a requirement that every user follow the same architecture.
 
-> **mailbox rule maximizes recall → AI classification improves precision.**
+## Progress reporting
 
-## Setup status format
-
-Keep progress concise, for example:
+Keep setup progress concise and useful. For example:
 
 ```text
 Smart Email Notifier
 ✓ Scenario understood
-✓ Recommended mailbox rule generated
-✓ Destination mailbox connected
+✓ Recall strategy generated
+✓ Destination mailbox available
 ✓ Semantic policy generated
-✓ Recurring check created
-→ Source-mail forwarding: waiting for your verification
-○ End-to-end test: pending
+→ Source-mail verification needs your action
+○ End-to-end test pending
 ```
 
 ## Privacy and safety
 
-Before publishing screenshots, examples, logs, or documentation, replace rather than merely blur full email addresses, phone numbers, verification codes, unnecessary personal names, candidate/student/account IDs, private assessment/interview/application links, meeting links that grant access, tokens, authorization codes, cookies, app passwords, QR codes, message IDs, and URLs containing identifiers or secrets.
+- Prefer selective forwarding over forwarding an entire private inbox.
+- Do not request mailbox passwords, SMS codes, recovery codes, app passwords, tokens or cookies.
+- Do not bypass authentication, CAPTCHA, 2FA or provider consent.
+- Do not fabricate provider URLs, capabilities or completed actions.
+- Minimize the amount of private email exposed to downstream services.
+- Avoid noisy notifications for every keyword match.
 
-Use synthetic values such as `example@qq.com` and `yourname@example.com`. Mark fictional recruiting cards as `演示数据 · 非真实招聘通知`.
+When preparing public screenshots, examples or logs, replace personal data with synthetic values rather than relying on blur alone. Remove real email addresses, phone numbers, verification data, unnecessary names, candidate/student/account IDs, private assessment/interview/application links, meeting links, tokens, cookies, authorization codes, QR codes, message IDs and URLs containing identifying parameters.
 
 ## Boundaries
 
-- A Skill does not itself grant mailbox or browser permissions.
-- Never fabricate a provider settings URL.
-- Never bypass authentication, 2FA, forwarding consent, CAPTCHA, or provider security controls.
-- Never ask for secrets that should remain between the user and provider.
-- Do not forward the entire private inbox by default.
-- Do not create noisy notifications for every matching email.
-- Provider-specific UI behavior belongs in adapters; scenario policy remains reusable.
+This Skill orchestrates capabilities that are available in the current environment; it does not grant new mailbox, browser or task permissions by itself. When a required capability is unavailable, fall back to concise guided setup instead of claiming full automation.
