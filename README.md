@@ -1,149 +1,100 @@
 # Smart Email Notifier
 
-**ChatGPT-first 通用重要邮件提醒 Skill｜告诉 ChatGPT 你不想错过什么，它会根据场景生成配置，并尽可能帮你完成设置和后续提醒。**
+A reusable ChatGPT Skill for important-email triage and actionable reminders.
 
-[中文说明](./README.zh-CN.md) · [QQ Mail → Gmail → ChatGPT 真实案例](./docs/qqmail-gmail-chatgpt.md)
+> **Tell ChatGPT what you don't want to miss. The Skill designs the filtering strategy, uses available tools where possible, and asks for your help only when authentication or consent is required.**
 
-## 它是什么？
+[中文说明](./README.zh-CN.md) · [Skill](./SKILL.md) · [QQ Mail → Gmail → ChatGPT example](./docs/qqmail-gmail-chatgpt.md)
 
-Smart Email Notifier 不是一份固定的“邮箱转发教程”，而是一个**配置向导型 Skill**。
+## Why
 
-你只需要描述目标，例如：
+Important messages are often buried among newsletters, promotions, and routine notifications. Keyword filters alone are also imperfect: an urgent message may say only “the next-round schedule has been updated”, while a promotional email may contain many high-signal keywords.
+
+Smart Email Notifier uses a two-stage approach:
+
+```text
+mailbox recall rule → AI semantic triage → actionable reminder
+```
+
+**Mailbox rules reduce misses; AI reduces noise.**
+
+## Quick start
+
+Install or provide [`SKILL.md`](./SKILL.md), then describe what matters in natural language:
 
 ```text
 帮我配置秋招重要邮件提醒。
 ```
 
 ```text
-帮我盯住所有需要我处理的学校通知。
+工作会议有改期、取消或者需要我提前准备时提醒我。
 ```
 
 ```text
-工作会议有改期、取消或需要我提前准备时提醒我。
+学校邮件里有考试、作业或需要我处理的通知时提醒我。
 ```
 
-Skill 会根据场景推导两层配置：
+The Skill will adapt the setup to the scenario and to the capabilities currently available. It can propose mailbox rules, generate the semantic triage policy, use connected mail/task capabilities when available, and guide the remaining provider-specific steps.
 
-### 1. 邮箱粗筛规则
+Authentication, CAPTCHA, SMS/2FA and sensitive consent always remain user-controlled.
 
-根据具体邮箱能力，推荐或生成：
+## What it can help configure
 
-- 匹配字段：主题 / 正文 / 发件人等；
-- 匹配方式：包含任一 / 包含全部 / 不包含任一 / 不包含全部等；
-- 召回关键词与必要的排除词；
-- 文件夹 / 标签；
-- 移动、保留、转发等执行动作。
+Depending on the mailbox and available tools, the Skill can help with:
 
-例如 QQ 邮箱的秋招场景，目标是尽量不要漏掉候选邮件，因此通常更适合使用 **「包含任一」** 做宽召回，而不是要求所有关键词同时出现。
+- mailbox folders or labels;
+- subject/body/sender matching;
+- any-match / all-match / exclusion logic;
+- recall keywords and exclusions;
+- selective forwarding or routing;
+- AI semantic triage rules;
+- extraction of deadlines, event times and next actions;
+- recurring or conditional checks;
+- end-to-end verification.
 
-### 2. ChatGPT 语义判断规则
+It does **not** grant itself mailbox or browser permissions. Automation depends on the ChatGPT environment, connected services and user authorization.
 
-邮箱规则只负责尽量把候选邮件找出来，ChatGPT 再判断它是否真的值得打扰你，并按场景提取：
+## Example: job-search email
 
-**事项 / 时间 / Deadline / 相关入口 / 下一步动作 / 紧急程度**。
+This project started from a job-search workflow: recruiting promotions, assessments, interviews, HR requests and offer-related messages all arrived in the same mailbox.
 
-> **邮箱规则负责别漏掉，AI 负责别烦你。**
-
-## 安装之后怎么用？
-
-安装或提供 [`SKILL.md`](./SKILL.md) 后，直接告诉 ChatGPT 你的需求即可。
-
-Skill 会先检查当前 ChatGPT 能使用哪些能力，再决定最短配置路径：
+One working setup was:
 
 ```text
-你告诉 ChatGPT 不想错过什么
-        ↓
-Skill 理解场景
-        ↓
-生成邮箱规则 + AI 判断策略
-        ↓
-检测 Mail / Tasks / Browser 等可用能力
-        ↓
-能安全自动完成的直接执行
-        ↓
-登录 / 验证码 / 2FA / 敏感授权时让你接管
-        ↓
-继续完成配置并验证链路
-        ↓
-以后自动检查，重要才提醒
+QQ Mail
+→ broad recall rule
+→ selective forwarding to Gmail
+→ ChatGPT semantic triage
+→ notify only when action is required
 ```
 
-**不是让用户安装后再照着 README 手动复制一整套配置。**
+The reusable Skill is provider- and scenario-oriented; the QQ Mail workflow is only one example. See the [sanitized walkthrough](./docs/qqmail-gmail-chatgpt.md) and the job-search preset in [`presets/`](./presets/).
 
-如果当前 ChatGPT 环境能够读取邮箱、创建 Tasks 或操作相关页面，Skill 应优先直接调用这些能力；只有当前工具做不到或涉及本人身份验证的步骤才交给用户。
+## Use cases
 
-> Skill 本身不会凭空获得邮箱或浏览器权限。实际自动化程度取决于当前 ChatGPT 客户端、已连接服务以及用户授权。
+Job search, work and meeting notices, school deadlines, billing and renewals, order exceptions, account/security notices, or any custom class of email where missing an actionable message has a real cost.
 
-## 真实案例：QQ 邮箱秋招提醒
-
-这个 Skill 最初来自一个真实需求：秋招期间，笔试、在线测评、面试、HR 待办、Offer / 签约等重要邮件容易淹没在普通招聘宣传里。
-
-以 QQ 邮箱为例：
+## Repository
 
 ```text
-需求：不漏掉需要候选人处理的秋招邮件
-        ↓
-Skill 推荐粗筛规则
-字段：主题 / 正文
-匹配：包含任一
-关键词：面试 / 笔试 / 测评 / Offer / 签约 / 下一轮 ...
-动作：移动到「求职」+ 转发 Gmail + 保留原邮件
-        ↓
-QQ 邮箱粗筛
-        ↓
-Gmail
-        ↓
-ChatGPT 定时检查
-        ↓
-AI 判断是否真的需要处理
-        ↓
-重要事项才提醒
+SKILL.md      reusable Skill instructions
+presets/      scenario-specific policies and examples
+docs/         provider examples and automation notes
+assets/       sanitized public demo assets
 ```
 
-QQ 邮箱首次设置自动转发时可能需要本人完成手机号验证，Gmail 也可能要求本人确认转发。这些安全步骤由用户完成；之后邮件转发、AI 分类和定时检查可以持续自动运行。
+Start with [`SKILL.md`](./SKILL.md). The supporting files explain examples; they are not required reading before using the Skill.
 
-详细脱敏流程见 [`docs/qqmail-gmail-chatgpt.md`](./docs/qqmail-gmail-chatgpt.md)，秋招策略见 [`presets/job-search-chatgpt.md`](./presets/job-search-chatgpt.md)。
+## Privacy and safety
 
-## 还能用在哪？
+Prefer selective forwarding over forwarding an entire private inbox. Never provide mailbox passwords, SMS codes, recovery codes, app passwords, tokens or cookies to the Skill.
 
-- **求职**：笔试、测评、面试、HR 待办、Offer、签约 Deadline
-- **工作**：会议邀请、改期、取消、需要提前准备或回复的事项
-- **学校**：考试、作业、课程变更、行政通知
-- **账单**：付款失败、续费、到期、退款异常
-- **订单**：配送异常、取件截止、退款状态
-- **安全**：异常登录、账号风险、需要本人确认的操作
-- **自定义**：告诉 ChatGPT 什么值得提醒，由 Skill 帮你设计规则
+Public examples should use synthetic identities and links. Remove real email addresses, phone numbers, candidate/account IDs, private assessment or meeting links, authorization data, QR codes and URLs containing identifying parameters.
 
-场景只是不同 preset，核心逻辑始终是：
+## Status
 
-> **宽召回 → AI 语义判断 → 只提醒真正需要处理的事项。**
-
-## 仓库结构
-
-```text
-SKILL.md                       通用 Skill / 配置编排规则
-CHATGPT.md                     ChatGPT-first 执行约定
-presets/                       场景策略
- docs/qqmail-gmail-chatgpt.md  QQ 邮箱真实案例
-assets/                        脱敏公开演示素材
-```
-
-普通用户从 README 和 `SKILL.md` 开始即可。自动化边界见 [`docs/automation-model.md`](./docs/automation-model.md)。
-
-## 隐私与安全
-
-公开截图、示例和日志中不要出现真实邮箱、手机号、验证码、姓名、候选人/账号 ID、私人笔试或面试链接、会议链接、Token、Cookie、授权码、二维码或带身份参数的 URL。
-
-Skill 不应索取邮箱密码、短信验证码、恢复码等秘密信息，也不会绕过登录、2FA 或邮箱服务商的安全验证。
-
-## V1 范围
-
-这是一个**通用 ChatGPT Skill**，不是独立邮箱软件。
-
-V1 的目标不是“零点击控制所有邮箱”，而是：
-
-> **让用户只描述需求，由 Skill 负责生成合适的配置、调用 ChatGPT 已有能力，并把必须本人完成的安全步骤压缩到最少。**
+V1 focuses on a reusable Skill rather than a standalone email application. Provider capabilities vary, so the Skill deliberately degrades from automation to guided setup when a required tool is unavailable.
 
 ## License
 
-No license has been selected yet.
+No license has been selected yet. Until a license is added, the repository is publicly viewable but no open-source reuse rights are granted by default.
