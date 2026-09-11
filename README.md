@@ -2,7 +2,7 @@
 
 A reusable AI Skill for important-email triage and actionable reminders.
 
-> **Tell your AI assistant what you do not want to miss. The Skill generates filtering and triage strategies and, when the current environment already provides the required capability and you authorize it, can help carry out supported setup steps. Authentication and sensitive consent remain user-controlled.**
+> **Tell your AI assistant what you do not want to miss. The Skill turns that intent into mailbox recall rules, semantic triage, and actionable reminders.**
 
 [中文说明](./README.zh-CN.md) · [Skill](./SKILL.md) · [QQ Mail → Gmail → ChatGPT example](./docs/qqmail-gmail-chatgpt.md)
 
@@ -48,9 +48,9 @@ Depending on the provider, AI environment and user authorization, the Skill can 
 
 ## Example: job-search email
 
-This project started from a job-search workflow in which recruiting promotions, assessments, interviews, HR requests and offer-related messages arrived in the same mailbox.
+A job-search mailbox is a useful example: recruiting promotions, assessments, interviews, HR requests, and offer-related messages often arrive together.
 
-One working setup was:
+Example workflow:
 
 ```text
 QQ Mail
@@ -60,11 +60,9 @@ QQ Mail
 → notify only when action is required
 ```
 
-The reusable Skill **does not require QQ Mail, Gmail or ChatGPT**. This is only a sanitized example. See the [walkthrough](./docs/qqmail-gmail-chatgpt.md) and [`presets/`](./presets/).
+The Skill works with other providers and assistants; QQ Mail, Gmail, and ChatGPT form one sanitized example. See the [walkthrough](./docs/qqmail-gmail-chatgpt.md) and [`presets/`](./presets/).
 
 ## Scope and limitations
-
-Please understand the following before use:
 
 - this is a reusable AI workflow Skill, **not a standalone email application or background service**;
 - the Skill does not grant itself mailbox, browser, account or task permissions;
